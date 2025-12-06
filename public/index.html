@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Islamic Skribbl - Draw & Guess</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            animation: fadeIn 1s;
+        }
+
+        header h1 {
+            font-size: 2.8em;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.3);
+            margin-bottom: 10px;
+        }
+
+        header p {
+            font-size: 1.2em;
+            opacity: 0.95;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .lobby-screen, .game-screen {
+            display: none;
+        }
+
+        .lobby-screen.active, .game-screen.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+
+        .lobby-panel {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            margin: 0 auto;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+
+        .lobby-panel h2 {
+            color: #667eea;
+            margin-bottom: 25px;
+            text-align: center;
+            font-size: 2em;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: bold;
+        }
+
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+
+        .input-group input:focus, .input-group select:focus {
+            outline: none;
+            border-color: #764ba2;
+            box-shadow: 0 0 10px rgba(118, 75, 162, 0.3);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.2em;
+            cursor: pointer;
+            margin-top: 12px;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .advanced-settings {
+            margin: 25px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+        }
+
+        .advanced-settings h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .settings-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .room-list {
+            max-height: 350px;
+            overflow-y: auto;
+            margin: 20px 0;
+        }
+
+        .room-item {
+            background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+            padding: 18px;
+            margin: 12px 0;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s;
+        }
+
+        .room-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .room-item button {
+            padding: 10px 25px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .room-item button:hover {
+            transform: scale(1.05);
+        }
+
+        .game-container {
+            display: grid;
+            grid-template-columns: 260px 1fr 320px;
+            gap: 20px;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .panel h3 {
+            color: #667eea;
+            margin-bottom: 18px;
+            font-size: 1.4em;
+        }
+
+        .player-list {
+            list-style: none;
+        }
+
+        .player-item {
+            padding: 14px;
+            margin: 10px 0;
+            background: #f5f5f5;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s;
+        }
+
+        .player-item:hover {
+            transform: translateX(3px);
+        }
+
+        .player-item.drawing {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffe8a1 100%);
+            border-left: 5px solid #ffc107;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        .player-item.guessed {
+            background: linear-gradient(135deg, #c8e6c9 0%, #a5d6a7 100%);
+        }
+
+        .player-score {
+            font-weight: bold;
+            color: #667eea;
+            font-size: 1.1em;
+        }
+
+        .canvas-area {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .game-info {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .word-display {
+            font-size: 2.2em;
+            letter-spacing: 10px;
+            color: #667eea;
+            font-weight: bold;
+            margin: 15px 0;
+            min-height: 60px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .timer {
+            font-size: 1.8em;
+            color: #f44336;
+            font-weight: bold;
+            animation: timerPulse 1s infinite;
+        }
+
+        @keyframes timerPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .round-info {
+            color: #666;
+            margin: 12px 0;
+            font-size: 1.1em;
+        }
+
+        canvas {
+            border: 4px solid #667eea;
+            border-radius: 12px;
+            cursor: crosshair;
+            display: block;
+            margin: 0 auto;
+            background: white;
+            touch-action: none;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        canvas.disabled {
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .tools {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .color-btn {
+            width: 45px;
+            height: 45px;
+            border: 3px solid #ddd;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .color-btn:hover {
+            transform: scale(1.2);
+        }
+
+        .color-btn.active {
+            transform: scale(1.3);
+            border-color: #333;
+            box-shadow: 0 0 15px rgba(0,0,0,0.3);
+        }
+
+        .tool-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1em;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .tool-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .size-slider {
+            width: 160px;
+        }
+
+        .chat-panel {
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 12px;
+            background: #fafafa;
+        }
+
+        .chat-message {
+            padding: 10px;
+            margin: 8px 0;
+            border-radius: 8px;
+            background: white;
+            animation: slideIn 0.3s;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .chat-message.system {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            color: #1976d2;
+            font-style: italic;
+            font-weight: 500;
+        }
+
+        .chat-message.correct {
+            background: linear-gradient(135deg, #c8e6c9 0%, #a5d6a7 100%);
+            color: #2e7d32;
+            font-weight: bold;
+        }
+
+        .chat-message.close {
+            background: linear-gradient(135deg, #fff9c4 0%, #fff59d 100%);
+            color: #f57f17;
+        }
+
+        .chat-input-area {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 14px;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: #764ba2;
+            box-shadow: 0 0 10px rgba(118, 75, 162, 0.3);
+        }
+
+        .send-btn {
+            padding: 14px 28px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .send-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .word-choices {
+            display: flex;
+            gap: 18px;
+            justify-content: center;
+            margin: 25px 0;
+        }
+
+        .word-choice {
+            padding: 18px 35px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1.2em;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .word-choice:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+
+        .difficulty-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.85em;
+            margin-left: 10px;
+            font-weight: bold;
+        }
+
+        .difficulty-easy {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .difficulty-medium {
+            background: #ff9800;
+            color: white;
+        }
+
+        .difficulty-hard {
+            background: #f44336;
+            color: white;
+        }
+
+        .difficulty-custom {
+            background: #9c27b0;
+            color: white;
+        }
+
+        .hint-box {
+            background: linear-gradient(135deg, #fff9c4 0%, #fff59d 100%);
+            padding: 12px;
+            border-radius: 10px;
+            margin: 12px 0;
+            text-align: center;
+            color: #f57f17;
+            font-weight: 500;
+            animation: bounce 1s;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .stats-panel {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .stats-panel h4 {
+            margin-bottom: 10px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        @media (max-width: 1200px) {
+            .game-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎨 Islamic Skribbl 🌙</h1>
+            <p>Draw and guess Islamic words with family & friends!</p>
+        </header>
+
+        <!-- Lobby Screen -->
+        <div class="lobby-screen active" id="lobbyScreen">
+            <div class="lobby-panel">
+                <h2>✨ Welcome!</h2>
+                
+                <div class="input-group">
+                    <label>👤 Your Name</label>
+                    <input type="text" id="playerName" placeholder="Enter your name" maxlength="20">
+                </div>
+
+                <div class="input-group">
+                    <label>🎯 Difficulty Level</label>
+                    <select id="difficulty">
+                        <option value="easy">Easy - Common Islamic terms</option>
+                        <option value="medium" selected>Medium - Mixed difficulty</option>
+                        <option value="hard">Hard - Advanced terms</option>
+                    </select>
+                </div>
+
+                <!-- Advanced Settings -->
+                <div class="advanced-settings">
+                    <h3>⚙️ Room Settings (Optional)</h3>
+                    <div class="settings-row">
+                        <div class="input-group">
+                            <label>Max Players</label>
+                            <select id="maxPlayers">
+                                <option value="2">2 Players</option>
+                                <option value="4">4 Players</option>
+                                <option value="6">6 Players</option>
+                                <option value="8" selected>8 Players</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label>Rounds</label>
+                            <select id="rounds">
+                                <option value="1">1 Round</option>
+                                <option value="3" selected>3 Rounds</option>
+                                <option value="5">5 Rounds</option>
+                                <option value="10">10 Rounds</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>Time Per Round (seconds)</label>
+                        <select id="timePerRound">
+                            <option value="30">30 seconds</option>
+                            <option value="60">60 seconds</option>
+                            <option value="80" selected>80 seconds</option>
+                            <option value="120">120 seconds</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>🔒 Room Password (optional)</label>
+                        <input type="password" id="password" placeholder="Leave empty for public room">
+                    </div>
+                    <div class="input-group">
+                        <label>✏️ Custom Words (comma separated)</label>
+                        <input type="text" id="customWords" placeholder="e.g. Prophet, Angel, Mercy">
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" onclick="createRoom()">🎮 Create New Room</button>
+                <button class="btn btn-success" onclick="quickJoin()">⚡ Quick Join</button>
+
+                <div class="room-list" id="roomList">
+                    <p style="text-align: center; color: #666; padding: 20px;">Loading rooms...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div class="game-screen" id="gameScreen">
+            <div class="game-container">
+                <!-- Players Panel -->
+                <div class="panel players-panel">
+                    <h3>👥 Players</h3>
+                    <div class="stats-panel">
+                        <h4>Room: <span id="roomCode">------</span></h4>
+                    </div>
+                    <ul class="player-list" id="playerList"></ul>
+                </div>
+
+                <!-- Canvas Area -->
+                <div class="canvas-area">
+                    <div class="game-info">
+                        <div class="round-info">Round <span id="currentRound">1</span> of <span id="totalRounds">3</span></div>
+                        <div class="timer">⏰ <span id="timer">80</span>s</div>
+                        <div class="word-display" id="wordDisplay">Waiting for players...</div>
+                        <div class="hint-box" id="hintBox" style="display: none;"></div>
+                        <div id="wordChoices" class="word-choices" style="display: none;"></div>
+                    </div>
+
+                    <canvas id="canvas" width="800" height="500"></canvas>
+
+                    <div class="tools" id="tools">
+                        <div class="color-btn active" style="background: black;" data-color="black"></div>
+                        <div class="color-btn" style="background: white; border-color: #666;" data-color="white"></div>
+                        <div class="color-btn" style="background: red;" data-color="red"></div>
+                        <div class="color-btn" style="background: blue;" data-color="blue"></div>
+                        <div class="color-btn" style="background: green;" data-color="green"></div>
+                        <div class="color-btn" style="background: yellow;" data-color="yellow"></div>
+                        <div class="color-btn" style="background: orange;" data-color="orange"></div>
+                        <div class="color-btn" style="background: purple;" data-color="purple"></div>
+                        <div class="color-btn" style="background: brown;" data-color="brown"></div>
+                        <div class="color-btn" style="background: pink;" data-color="pink"></div>
+                        
+                        <input type="range" class="size-slider" id="brushSize" min="1" max="30" value="3">
+                        <span style="color: #666; font-weight: bold;">Size: <span id="sizeDisplay">3</span></span>
+                        
+                        <button class="tool-btn" id="clearBtn">🗑️ Clear</button>
+                        <button class="tool-btn" id="undoBtn">↩️ Undo</button>
+                        <button class="tool-btn" id="fillBtn">🪣 Fill</button>
+                    </div>
+                </div>
+
+                <!-- Chat Panel -->
+                <div class="panel chat-panel">
+                    <h3>💬 Chat</h3>
+                    <div class="chat-messages" id="chatMessages"></div>
+                    <div class="chat-input-area">
+                        <input type="text" class="chat-input" id="chatInput" placeholder="Type your guess..." autocomplete="off">
+                        <button class="send-btn" id="sendBtn">Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="client.js"></script>
+</body>
+</html>

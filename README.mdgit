@@ -74,3 +74,22 @@ push
 -u
 origin
 main
+# islamic-skribbl
+initgit
+add
+README.mdgit
+commit
+-m
+first commit
+git
+branch
+-M
+maingit
+remote
+add
+origin
+https://github.com/jafarshaik118/islamic-skribbl.gitgit
+push
+-u
+origin
+main

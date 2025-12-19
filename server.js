@@ -1,9 +1,10 @@
+require('dotenv').config();
 const express = require('express');
 const app = express();
 const http = require('http').createServer(app);
 const io = require('socket.io')(http);
-
-const PORT = process.env.PORT || 3000;
+const ngrok = require('@ngrok/ngrok');
+const getPort = require('get-port').default;
 
 app.use(express.static('public'));
 
@@ -565,10 +566,44 @@ function updateLeaderboard(playerName, points) {
     globalStats.leaderboard.sort((a, b) => b.score - a.score);
 }
 
-http.listen(PORT, () => {
-    console.log('='.repeat(60));
-    console.log(`🚀 Islamic Skribbl Server - Enhanced Edition`);
-    console.log(`📍 Local: http://localhost:${PORT}`);
-    console.log(`✨ Features: Custom rooms, leaderboard, 100+ words!`);
-    console.log('='.repeat(60));
-});
+(async () => {
+  try {
+    // Find a free port (default 3000)
+    const PORT = await getPort({ port: 3000 });
+
+    // Start HTTP server
+    http.listen(PORT, async () => {
+      console.log('='.repeat(60));
+      console.log(`🚀 Islamic Skribbl Server - Enhanced Edition`);
+      console.log(`📍 Local: http://localhost:${PORT}`);
+      console.log(`✨ Features: Custom rooms, leaderboard, 100+ words!`);
+      console.log('='.repeat(60));
+
+      // Connect ngrok
+      try {
+        const ngrokOptions = {
+          addr: PORT
+        };
+
+        // If NGROK_AUTHTOKEN environment variable is set, use it
+        if (process.env.NGROK_AUTHTOKEN) {
+          ngrokOptions.authtoken = process.env.NGROK_AUTHTOKEN;
+        }
+
+        const listener = await ngrok.connect(ngrokOptions);
+        const url = listener.url();
+        console.log('='.repeat(60));
+        console.log(`🌍 Ngrok tunnel live at: ${url}`);
+        console.log(`📤 Share this link with friends to play together!`);
+        console.log('='.repeat(60));
+      } catch (ngrokErr) {
+        console.error('❌ Ngrok connection failed:', ngrokErr.message);
+        console.error('💡 Set your authtoken: set NGROK_AUTHTOKEN=your_token_here');
+        console.error('   Then run: npm start');
+      }
+    });
+
+  } catch (err) {
+    console.error('❌ Error starting server:', err);
+  }
+})();

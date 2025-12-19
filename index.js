@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const ngrok = require('@ngrok/ngrok');
 const path = require('path');
@@ -20,15 +21,22 @@ app.use(express.static(path.join(__dirname, 'public')));
       // Connect ngrok
       let url;
       try {
-        url = await ngrok.connect({
+        const ngrokOptions = {
           addr: PORT
-          // Do NOT include authtoken here if you already ran
-          // `ngrok config add-authtoken YOUR_TOKEN`
-        });
+        };
+
+        // If NGROK_AUTHTOKEN environment variable is set, use it
+        if (process.env.NGROK_AUTHTOKEN) {
+          ngrokOptions.authtoken = process.env.NGROK_AUTHTOKEN;
+        }
+
+        const listener = await ngrok.connect(ngrokOptions);
+        url = listener.url();
         console.log(`🌍 Ngrok tunnel live at: ${url}`);
       } catch (ngrokErr) {
         console.error('❌ Ngrok connection failed:', ngrokErr.message);
-        console.error('Make sure you have installed ngrok and added your authtoken.');
+        console.error('💡 Set your authtoken: set NGROK_AUTHTOKEN=your_token_here');
+        console.error('   Then run: node index.js');
       }
     });
 
